@@ -3,20 +3,21 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
 import {
   Users,
   Activity,
-  CheckCircle2,
-  XCircle,
-  Calendar,
   Network,
   Trash2,
   Settings,
-  Bell,
-  Sparkles,
-  User,
   Menu,
   X,
 } from "lucide-react"
@@ -32,6 +33,13 @@ interface Margem {
 
 export default function PainelAfiliados() {
   const [menuAberto, setMenuAberto] = useState(false)
+  const [modalNovaMargemAberto, setModalNovaMargemAberto] = useState(false)
+  const [novaMargemForm, setNovaMargemForm] = useState({
+    nome: "",
+    numeroSessoes: "1",
+    prefixoGrupos: "",
+    grupoEnvio: "",
+  })
   const [margens] = useState<Margem[]>([
     {
       id: "1",
@@ -101,15 +109,11 @@ export default function PainelAfiliados() {
 
             {/* Desktop - Botões visíveis */}
             <div className="hidden md:flex items-center gap-3">
-              <Button variant="outline" size="sm" className="gap-2 bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white whitespace-nowrap">
-                <Settings className="h-4 w-4" />
-                API
-              </Button>
-              <Button variant="outline" size="sm" className="gap-2 bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white whitespace-nowrap">
-                <span className="font-serif italic font-bold">T</span>
-                Configurar Textos
-              </Button>
-              <Button size="sm" className="bg-white text-black hover:bg-gray-200 font-medium whitespace-nowrap">
+              <Button 
+                size="sm" 
+                className="bg-white text-black hover:bg-gray-200 font-medium whitespace-nowrap"
+                onClick={() => setModalNovaMargemAberto(true)}
+              >
                 + Nova Margem
               </Button>
             </div>
@@ -151,26 +155,11 @@ export default function PainelAfiliados() {
                 </div>
 
                 <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                  onClick={() => setMenuAberto(false)}
-                >
-                  <Settings className="h-4 w-4" />
-                  API
-                </Button>
-
-                <Button
-                  variant="outline"
-                  className="w-full justify-start gap-2 bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
-                  onClick={() => setMenuAberto(false)}
-                >
-                  <span className="font-serif italic font-bold">T</span>
-                  Configurar Textos
-                </Button>
-
-                <Button
                   className="w-full justify-start bg-white text-black hover:bg-gray-200 font-medium"
-                  onClick={() => setMenuAberto(false)}
+                  onClick={() => {
+                    setMenuAberto(false)
+                    setModalNovaMargemAberto(true)
+                  }}
                 >
                   + Nova Margem
                 </Button>
@@ -186,14 +175,6 @@ export default function PainelAfiliados() {
           <Button variant="secondary" className="bg-white text-black hover:bg-gray-200 gap-2 rounded-md whitespace-nowrap">
             <Users className="h-4 w-4" />
             Painel do WhatsApp
-          </Button>
-          <Button variant="ghost" className="text-gray-400 hover:text-white hover:bg-gray-800 gap-2 whitespace-nowrap">
-            <Activity className="h-4 w-4" />
-            Envio Direto Telegram
-          </Button>
-          <Button variant="ghost" className="text-gray-400 hover:text-white hover:bg-gray-800 gap-2 whitespace-nowrap">
-            <Network className="h-4 w-4" />
-            Monitoramento
           </Button>
         </div>
 
@@ -310,6 +291,120 @@ export default function PainelAfiliados() {
           ))}
         </div>
       </div>
+
+      {/* Modal Nova Margem */}
+      <Dialog open={modalNovaMargemAberto} onOpenChange={setModalNovaMargemAberto}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Criar Nova Margem</DialogTitle>
+            <DialogDescription>
+              Crie um novo grupo de sessões WhatsApp com configurações independentes.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Nome da Margem */}
+            <div className="space-y-2">
+              <label htmlFor="nome" className="text-sm font-medium text-gray-300">
+                Nome da Margem
+              </label>
+              <Input
+                id="nome"
+                placeholder="Ex: Margem Fitness"
+                value={novaMargemForm.nome}
+                onChange={(e) =>
+                  setNovaMargemForm({ ...novaMargemForm, nome: e.target.value })
+                }
+                className="bg-[#1a1a1a] border-gray-700 text-white placeholder:text-gray-500 focus:border-gray-600"
+              />
+            </div>
+
+            {/* Número de Sessões */}
+            <div className="space-y-2">
+              <label htmlFor="sessoes" className="text-sm font-medium text-gray-300">
+                Número de Sessões (1-10)
+              </label>
+              <Input
+                id="sessoes"
+                type="number"
+                min="1"
+                max="10"
+                placeholder="1"
+                value={novaMargemForm.numeroSessoes}
+                onChange={(e) =>
+                  setNovaMargemForm({ ...novaMargemForm, numeroSessoes: e.target.value })
+                }
+                className="bg-[#1a1a1a] border-gray-700 text-white placeholder:text-gray-500 focus:border-gray-600"
+              />
+            </div>
+
+            {/* Prefixo dos Grupos */}
+            <div className="space-y-2">
+              <label htmlFor="prefixo" className="text-sm font-medium text-gray-300">
+                Prefixo dos Grupos
+              </label>
+              <Input
+                id="prefixo"
+                placeholder="Ex: Minha Nova Margem -"
+                value={novaMargemForm.prefixoGrupos}
+                onChange={(e) =>
+                  setNovaMargemForm({ ...novaMargemForm, prefixoGrupos: e.target.value })
+                }
+                className="bg-[#1a1a1a] border-gray-700 text-white placeholder:text-gray-500 focus:border-gray-600"
+              />
+              <p className="text-xs text-gray-500">
+                Prefixo usado para identificar os grupos de destino
+              </p>
+            </div>
+
+            {/* Grupo de Envio */}
+            <div className="space-y-2">
+              <label htmlFor="grupoEnvio" className="text-sm font-medium text-gray-300">
+                Grupo de Envio
+              </label>
+              <Input
+                id="grupoEnvio"
+                placeholder="Ex: Grupo de Envio Novo"
+                value={novaMargemForm.grupoEnvio}
+                onChange={(e) =>
+                  setNovaMargemForm({ ...novaMargemForm, grupoEnvio: e.target.value })
+                }
+                className="bg-[#1a1a1a] border-gray-700 text-white placeholder:text-gray-500 focus:border-gray-600"
+              />
+              <p className="text-xs text-gray-500">
+                Nome do grupo que será monitorado para disparar envios
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setModalNovaMargemAberto(false)}
+              className="bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 hover:text-white"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={() => {
+                // Aqui você pode adicionar a lógica para criar a margem
+                console.log("Nova Margem:", novaMargemForm)
+                setModalNovaMargemAberto(false)
+                // Resetar formulário
+                setNovaMargemForm({
+                  nome: "",
+                  numeroSessoes: "1",
+                  prefixoGrupos: "",
+                  grupoEnvio: "",
+                })
+              }}
+              className="bg-white text-black hover:bg-gray-200"
+            >
+              Criar Margem
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
