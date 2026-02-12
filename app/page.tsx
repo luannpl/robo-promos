@@ -21,6 +21,7 @@ import {
   Menu,
   X,
 } from "lucide-react"
+import { api } from "@/lib/api"
 
 interface Margem {
   id: string
@@ -90,6 +91,33 @@ export default function PainelAfiliados() {
       dependentes: 1,
     },
   ])
+
+  const handleCriarMargem = async () => {
+    console.log("Nova Margem:", novaMargemForm)
+    const novaMargem = {
+      sessionId: novaMargemForm.nome,
+      sourceGroupPrefix: novaMargemForm.prefixoGrupos,
+      targetGroupPrefix: novaMargemForm.grupoEnvio, 
+    }
+    try {
+      const response = await fetch(`${api}/sessions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(novaMargem),
+      })
+
+      if (!response.ok) {
+        throw new Error("Erro ao criar margem")
+      }
+
+      const data = await response.json()
+      console.log(data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   const totalMargens = 11
   const totalSessoes = 11
@@ -386,18 +414,7 @@ export default function PainelAfiliados() {
               Cancelar
             </Button>
             <Button
-              onClick={() => {
-                // Aqui você pode adicionar a lógica para criar a margem
-                console.log("Nova Margem:", novaMargemForm)
-                setModalNovaMargemAberto(false)
-                // Resetar formulário
-                setNovaMargemForm({
-                  nome: "",
-                  numeroSessoes: "1",
-                  prefixoGrupos: "",
-                  grupoEnvio: "",
-                })
-              }}
+              onClick={handleCriarMargem}
               className="bg-white text-black hover:bg-gray-200"
             >
               Criar Margem
