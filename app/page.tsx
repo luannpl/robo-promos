@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -20,6 +20,7 @@ import {
   Settings,
   Menu,
   X,
+  StopCircle,
 } from "lucide-react"
 import { api } from "@/lib/api"
 
@@ -27,9 +28,15 @@ interface Margem {
   id: string
   nome: string
   status: "ativa" | "inativa"
-  ultimaAtualizacao: string
-  sessoesAtivas: number
-  dependentes: number
+}
+
+interface SessionAPI {
+  id: number
+  sessionId: string
+  sourceGroup: string
+  targetGroup: string
+  createdAt: string
+  status: boolean
 }
 
 export default function PainelAfiliados() {
@@ -41,56 +48,30 @@ export default function PainelAfiliados() {
     prefixoGrupos: "",
     grupoEnvio: "",
   })
-  const [margens] = useState<Margem[]>([
-    {
-      id: "1",
-      nome: "Hiper Geral Margem 1",
-      status: "ativa",
-      ultimaAtualizacao: "1/1",
-      sessoesAtivas: 1,
-      dependentes: 1,
-    },
-    {
-      id: "2",
-      nome: "Hyper Fit Margem 1.1",
-      status: "ativa",
-      ultimaAtualizacao: "1/1",
-      sessoesAtivas: 1,
-      dependentes: 1,
-    },
-    {
-      id: "3",
-      nome: "Hyper Fit Margem 1.2",
-      status: "ativa",
-      ultimaAtualizacao: "1/1",
-      sessoesAtivas: 1,
-      dependentes: 1,
-    },
-    {
-      id: "4",
-      nome: "Hyper Fit Margem 1.3",
-      status: "ativa",
-      ultimaAtualizacao: "1/1",
-      sessoesAtivas: 1,
-      dependentes: 1,
-    },
-    {
-      id: "5",
-      nome: "Hyper Fit Margem 1.4",
-      status: "ativa",
-      ultimaAtualizacao: "1/1",
-      sessoesAtivas: 1,
-      dependentes: 1,
-    },
-    {
-      id: "6",
-      nome: "Hyper Fit Margem 1.5",
-      status: "ativa",
-      ultimaAtualizacao: "1/1",
-      sessoesAtivas: 1,
-      dependentes: 1,
-    },
-  ])
+  const [margens, setMargens] = useState<Margem[]>([])
+  const [carregando, setCarregando] = useState(true)
+
+  useEffect(() => {
+    const buscarSessoes = async () => {
+      try {
+        const response = await fetch(`${api}/sessions`)
+        if (!response.ok) throw new Error("Erro ao buscar sessões")
+        const data: SessionAPI[] = await response.json()
+        const margensMapeadas: Margem[] = data.map((s) => ({
+          id: String(s.id),
+          nome: s.sessionId,
+          status: s.status ? "ativa" : "inativa",
+        }))
+        setMargens(margensMapeadas)
+      } catch (error) {
+        console.error(error)
+      } finally {
+        setCarregando(false)
+      }
+    }
+
+    buscarSessoes()
+  }, [])
 
   const handleCriarMargem = async () => {
     console.log("Nova Margem:", novaMargemForm)
@@ -260,64 +241,68 @@ export default function PainelAfiliados() {
         </div>
 
         {/* Margins Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {margens.map((margem) => (
-            <Card key={margem.id} className="bg-[#111111] border-none shadow-lg relative group">
-              <CardContent className="p-5">
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="flex items-center gap-3">
-                    <Users className="h-5 w-5 text-gray-500" />
-                    <h3 className="text-sm font-medium text-white truncate flex-1">{margem.nome}</h3>
-                    <span className="text-xs text-green-500/50 font-mono">1/1</span>
-                  </div>
+        {carregando ? (
+          <p className="text-sm text-gray-400">Carregando sessões...</p>
+        ) : margens.length === 0 ? (
+          <p className="text-sm text-gray-400">Nenhuma sessão encontrada.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {margens.map((margem) => (
+              <Card key={margem.id} className="bg-[#111111] border-none shadow-lg relative group">
+                <CardContent className="p-5">
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center gap-3">
+                      <Users className="h-5 w-5 text-gray-500" />
+                      <h3 className="text-sm font-medium text-white truncate flex-1">{margem.nome}</h3>
+                      <span className="text-xs text-green-500/50 font-mono">1/1</span>
+                    </div>
 
-                  {/* Status */}
-                  <div className="flex items-center justify-between py-1">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 border border-gray-600 rounded-sm" />
-                      <span className="text-xs text-gray-400">1ª sessão</span>
+                    {/* Status */}
+                    <div className="flex items-center justify-between py-1">
+                      <div className="flex items-center gap-1.5">
+                        <div className={`h-1.5 w-1.5 rounded-full ${margem.status === "inativa" ? "bg-red-500" : "bg-green-500"}`} />
+                        <span className={`text-xs ${margem.status === "inativa" ? "text-red-500" : "text-green-500"}`}>{margem.status === "inativa" ? "Inativo" : "Ativo"}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                      <span className="text-xs text-green-500">Ativo</span>
-                    </div>
-                  </div>
 
-                  {/* Description */}
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs text-gray-400">
-                      <div className="h-3 w-3 border border-gray-600 rounded-sm" />
-                      <span>HIPER GERAL -</span>
-                    </div>
-                    <div className="pl-5 text-xs text-gray-500">
-                      UPdesconto Fitness - 11
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={`flex-1 h-9 cursor-pointer ${
+                          margem.status === "inativa"
+                            ? "bg-transparent border-green-700 text-green-400 hover:bg-green-900/30"
+                            : "bg-transparent border-gray-700 text-red-400 hover:bg-gray-800"
+                        }`}
+                      >
+                        {margem.status === "inativa" ? (
+                          <>
+                            <Activity className="h-4 w-4 mr-2" />
+                            Ativar Margem
+                          </>
+                        ) : (
+                          <>
+                            <StopCircle className="h-4 w-4 mr-2" />
+                            Parar
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="h-9 w-9 cursor-pointer bg-red-500/10 text-white-500 hover:bg-red-500 hover:text-red-400 border border-red-500/20"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 bg-transparent border-gray-700 text-gray-300 hover:bg-gray-800 h-9"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Expandir
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="h-9 w-9 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Modal Nova Margem */}
