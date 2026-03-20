@@ -39,6 +39,13 @@ interface SessionAPI {
   status: boolean
 }
 
+interface SessionsResponse {
+  total: number
+  active: number
+  inactive: number
+  data: SessionAPI[]
+}
+
 export default function PainelAfiliados() {
   const [menuAberto, setMenuAberto] = useState(false)
   const [modalNovaMargemAberto, setModalNovaMargemAberto] = useState(false)
@@ -51,13 +58,22 @@ export default function PainelAfiliados() {
   const [margens, setMargens] = useState<Margem[]>([])
   const [carregando, setCarregando] = useState(true)
 
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 })
+
   useEffect(() => {
     const buscarSessoes = async () => {
       try {
         const response = await fetch(`${api}/sessions`)
         if (!response.ok) throw new Error("Erro ao buscar sessões")
-        const data: SessionAPI[] = await response.json()
-        const margensMapeadas: Margem[] = data.map((s) => ({
+        const responseData: SessionsResponse = await response.json()
+        
+        setStats({
+          total: responseData.total,
+          active: responseData.active,
+          inactive: responseData.inactive
+        })
+
+        const margensMapeadas: Margem[] = responseData.data.map((s) => ({
           id: String(s.id),
           nome: s.sessionId,
           status: s.status ? "ativa" : "inativa",
@@ -100,10 +116,10 @@ export default function PainelAfiliados() {
     }
   }
 
-  const totalMargens = 11
-  const totalSessoes = 11
-  const sessoesConectadas = 6
-  const sessoesDesconectadas = 5
+  const totalMargens = stats.total // Usando total de sessões como fall-back temporário
+  const totalSessoes = stats.total
+  const sessoesConectadas = stats.active
+  const sessoesDesconectadas = stats.inactive
 
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
